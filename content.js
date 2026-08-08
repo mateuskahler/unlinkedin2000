@@ -28,14 +28,27 @@ function findFeedPostDivs() {
 }
 
 function findInnerPostDivs(outerDivs) {
-  // TODO: search for inner content
   const innerContentElements = [];
 
   outerDivs.forEach((outerDiv) => {
-    innerContentElements.push({
-      outer: outerDiv,
-      inner: null
-    });
+    const allKeyElements = outerDiv.querySelectorAll('[componentkey]');
+    let firstMatch = null;
+
+    for (const element of allKeyElements) {
+      const key = (element.getAttribute('componentkey') || '').toLowerCase();
+
+      if ((key.includes('feed') || key.includes('translatable-commentary')) && key.includes('comment')) {
+        firstMatch = element;
+        break;
+      }
+    }
+
+    if (firstMatch) {
+      innerContentElements.push({
+        outer: outerDiv,
+        inner: firstMatch
+      });
+    }
   });
 
   return innerContentElements;
@@ -46,7 +59,12 @@ function findInnerPostDivs(outerDivs) {
 
 function applyTransformation(item) {
   const { outer, inner } = item;
-  if (outer) {
+  if (outer && inner) {
+
+    inner.style.border = '3px solid red';
+    inner.style.boxSizing = 'border-box';
+    inner.style.padding = '4px';
+
     outer.style.border = '3px solid green';
     outer.style.boxSizing = 'border-box';
     outer.style.padding = '4px';
