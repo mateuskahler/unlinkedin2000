@@ -2,6 +2,18 @@
 
 const PROCESSED_ATTR = 'data-unlink2000-processed';
 
+function cleanTextForTokenization(text) {
+  if (!text) return '';
+
+  return text
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Posts Selection
@@ -54,13 +66,26 @@ function findInnerPostDivs(outerDivs) {
   return innerContentElements;
 }
 
+function extractInnerContentText(elements) {
+  return elements.map(({ outer, inner }) => {
+    const rawText = inner.textContent || '';
+    const cleanedText = rawText.replace(/\s+/g, ' ').trim();
+    
+    let finalText = '';
+    if (cleanedText) {
+      finalText = cleanTextForTokenization(cleanedText);
+    }
+    
+    return { outer, inner, text: finalText };
+  });
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 // Visual feedback
 
 function applyTransformation(item) {
   const { outer, inner } = item;
   if (outer && inner) {
-
     inner.style.border = '3px solid red';
     inner.style.boxSizing = 'border-box';
     inner.style.padding = '4px';
@@ -68,6 +93,8 @@ function applyTransformation(item) {
     outer.style.border = '3px solid green';
     outer.style.boxSizing = 'border-box';
     outer.style.padding = '4px';
+
+    console.log('Transformed Post:', item.text);
   }
 }
 
@@ -77,8 +104,9 @@ function applyTransformation(item) {
 function runPipeline() {
   const foundDivs = findFeedPostDivs();
   const contentDivs = findInnerPostDivs(foundDivs);
+  const contentDivsWithText = extractInnerContentText(contentDivs);
 
-  for (const item of contentDivs) {
+  for (const item of contentDivsWithText) {
     applyTransformation(item);
   }
 }
