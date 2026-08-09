@@ -1,1 +1,7 @@
 local_tmp/**
+
+# Ignore the models during testing as it would pollute the git history with large files
+web_classifier_amalgamation/models/**
+
+# TODO: at some point, include the selected model in the repo
+# !web_classifier_amalgamation/models/selected_model/...

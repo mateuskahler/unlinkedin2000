@@ -1,0 +1,2 @@
+// placeholder for inference code
+// it seems like, for Chrome extensions, the offscreen document is the only way to run WebAssembly code in a background context without a visible UI. This is because the background service worker cannot directly run WebAssembly code due to its limitations. The offscreen document allows us to create a hidden page that can execute WebAssembly (as of August 2026)

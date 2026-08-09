@@ -1,4 +1,23 @@
+const OFFSCREEN_DOCUMENT_PATH = 'web_classifier_amalgamation/offscreen.html';
+
+// Checks if the offscreen document is already created and active
+async function ensureOffscreenDocumentCreated() {
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)]
+  });
+
+  if (existingContexts.length === 0) {
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_DOCUMENT_PATH,
+      reasons: ['WORKERS'],
+      justification: 'Offline machine learning model execution'
+    });
+  }
+}
+
 async function handleClassificationRequest(text) {
+  await ensureOffscreenDocumentCreated();
 
   return new Promise((resolve) => {
     // Placeholder 

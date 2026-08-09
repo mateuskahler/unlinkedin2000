@@ -98,7 +98,7 @@ async function classifySinglePost(item) {
 
   let response;
   try {
-    response = await chrome.runtime.sendMessage({
+    response = await sendMessageWithTimeout({
       action: 'CLASSIFY_POST',
       text: item.text
     });
