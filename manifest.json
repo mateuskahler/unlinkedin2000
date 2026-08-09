@@ -3,6 +3,10 @@
   "name": "LinkedIn Feed Filter",
   "version": "1.0",
   "description": "Filter LinkedIn feed posts using a WebAssembly-based classifier (study project).",
+  
+  "background": {
+    "service_worker": "web_classifier_amalgamation/background.js"
+  },
   "content_scripts": [
     {
       "matches": [

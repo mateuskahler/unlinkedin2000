@@ -126,11 +126,43 @@ class AsyncQueue {
   }
 }
 
+async function classifySinglePost(item) {
+  if (!document.body.contains(item.outer)) {
+    console.log('[content.js] Skipping element detached from DOM');
+    return;
+  }
+
+  if (!item.text) return;
+  console.log(`[content.js] classifying: ${item.text}`);
+
+  let response;
+  try {
+    response = await chrome.runtime.sendMessage({
+      action: 'CLASSIFY_POST',
+      text: item.text
+    });
+  } catch (error) {
+    console.error('[content.js] Messaging error:', error);
+    throw error;
+  }
+
+  if (!response || response.status === 'ERROR') {
+    console.warn('[content.js] Error from background service worker:', response ? response.error : 'No response');
+    throw new Error(response ? response.error : 'No response from background worker');
+  }
+
+  console.log(`[content.js] received status: ${response.status}`);
+
+  if (response.status !== 'APPROVED') {
+    // TODO
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Pipeline Execution
+
+const classification_queue = new AsyncQueue();
+let debounceTimer = null;
 
 function runPipeline() {
   const foundDivs = findFeedPostDivs();
@@ -139,12 +171,11 @@ function runPipeline() {
 
   for (const item of contentDivsWithText) {
     applyTransformation(item);
+    classification_queue.enqueue([item], classifySinglePost);
   }
 }
 
 runPipeline();
-
-let debounceTimer = null;
 
 const observer = new MutationObserver((mutations) => {
   let hasNewNodes = false;
