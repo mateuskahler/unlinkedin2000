@@ -2,18 +2,6 @@
 
 const PROCESSED_ATTR = 'data-unlink2000-processed';
 
-function cleanTextForTokenization(text) {
-  if (!text) return '';
-
-  return text
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\p{Extended_Pictographic}/gu, '')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/[\r\n\t]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Posts Selection
@@ -97,34 +85,7 @@ function applyTransformation(item) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-// Queue handling
-
-class AsyncQueue {
-  constructor() {
-    this.chain = Promise.resolve();
-    this.retryMap = new WeakMap();
-    this.maxRetries = 3;
-  }
-
-  enqueue(items, workerFn) {
-    for (const item of items) {
-      const attempts = this.retryMap.get(item.outer) || 0;
-
-      if (attempts >= this.maxRetries) continue;
-
-      this.retryMap.set(item.outer, attempts + 1);
-
-      this.chain = this.chain
-        .then(async () => {
-          await workerFn(item);
-          this.retryMap.set(item.outer, this.maxRetries);
-        })
-        .catch((err) => {
-          console.error(`[content.js][Queue Error] Attempt ${attempts + 1} failed:`, err);
-        });
-    }
-  }
-}
+// Classification
 
 async function classifySinglePost(item) {
   if (!document.body.contains(item.outer)) {
