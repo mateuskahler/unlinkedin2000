@@ -126,7 +126,7 @@ function applyTransformation_Reproved(item) {
     justify-content: space-between;
   `;
   banner.innerHTML = `
-    <span>🛡️ <strong>Post hidden by Feed Classifier</strong></span>
+    <span>🛡️ <strong>Post hidden by Unlinkedin2000</strong></span>
     <span style="font-size: 11px; text-decoration: underline;">Click to reveal</span>
   `;
 
