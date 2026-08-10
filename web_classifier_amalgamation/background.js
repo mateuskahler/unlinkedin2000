@@ -20,22 +20,56 @@ async function handleClassificationRequest(text) {
   await ensureOffscreenDocumentCreated();
 
   return new Promise((resolve) => {
-    // Placeholder 
-    resolve({
-      status: 'APPROVED',
-    });
+    chrome.runtime.sendMessage(
+      { target: 'offscreen', action: 'RUN_INFERENCE', text: text },
+      (response) => {
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          console.error('[background.js] Messaging error with offscreen document:', lastError.message);
+          resolve({ status: 'ERROR', error: lastError.message });
+          return;
+        }
+
+        if (!response || response.status !== 'SUCCESS') {
+          const errorMessage = response ? response.error : 'No response from offscreen pipeline';
+          resolve({ status: 'ERROR', error: errorMessage });
+          return;
+        }
+
+        /** Response structure from offscreen.js:      
+        status: 'SUCCESS' || 'ERROR',
+        data: {
+            decision: 'APPROVED' || 'REPROVED',
+            topLabel: topLabel,
+            topScore: topScore,
+            labels: output.labels,
+            scores: output.scores,
+            evaluatedText: text
+        }
+        */
+
+        console.log('[background.js] Received evaluated text:', response.data.evaluatedText);
+        console.log('[background.js] Received Labels:', response.data.labels);
+        console.log('[background.js] Received Scores:', response.data.scores);
+        console.log('[background.js] Classification Decision:', response.data.decision);
+
+        resolve({
+          status: 'SUCCESS',
+          decision: response.data.decision,
+          outputs: response.data
+        });
+      }
+    );
   });
 }
 
-// Listen for messages (hopefully coming from content.js)
+// Listen for messages coming from content.js
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action !== 'CLASSIFY_POST') {
-    return false;
+  if (message.target !== 'offscreen' && message.action === 'CLASSIFY_POST') {
+    handleClassificationRequest(message.text)
+      .then(result => sendResponse(result))
+      .catch(err => sendResponse({ status: 'ERROR', error: err.message }));
+
+    return true; // Keeps channel open for async sendResponse
   }
-
-  handleClassificationRequest(message.text)
-    .then((result) => sendResponse(result))
-    .catch((error) => sendResponse({ status: 'ERROR', error: error.message }));
-
-  return true; // Keeps the message channel open for async sendResponse
 });
