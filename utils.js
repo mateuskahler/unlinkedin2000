@@ -41,26 +41,38 @@ function sendMessageWithTimeout(message, timeoutMs = 5000) {
 class AsyncQueue {
   constructor() {
     this.chain = Promise.resolve();
-    this.retryMap = new WeakMap();
+    this.processedSet = new WeakSet(); // Track successfully processed DOM nodes
     this.maxRetries = 3;
   }
 
   enqueue(items, workerFn) {
     for (const item of items) {
-      const attempts = this.retryMap.get(item.outer) || 0;
+      if (!item.outer || this.processedSet.has(item.outer)) continue;
 
-      if (attempts >= this.maxRetries) continue;
+      this.chain = this.chain.then(async () => {
+        if (this.processedSet.has(item.outer)) return;
 
-      this.retryMap.set(item.outer, attempts + 1);
+        let success = false;
 
-      this.chain = this.chain
-        .then(async () => {
-          await workerFn(item);
-          this.retryMap.set(item.outer, this.maxRetries);
-        })
-        .catch((err) => {
-          console.error(`[content.js][Queue Error] Attempt ${attempts + 1} failed:`, err);
-        });
+        // internal retry loop
+        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+          try {
+            await workerFn(item);
+            success = true;
+            this.processedSet.add(item.outer);
+            break;
+          } catch (err) {
+            console.warn(
+              `[content.js][Queue] Attempt ${attempt}/${this.maxRetries} failed for item:`,
+              err.message
+            );
+          }
+        }
+
+        if (!success) {
+          console.error(`[content.js][Queue] Giving up on item after ${this.maxRetries} attempts.`);
+        }
+      });
     }
   }
 }
