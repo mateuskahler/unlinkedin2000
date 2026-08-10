@@ -87,25 +87,61 @@ function applyTransformation_Approved(item) {
     outer.style.boxSizing = 'border-box';
     outer.style.padding = '4px';
   }
-  if (inner) {
-    inner.style.border = '1px solid green';
-    inner.style.boxSizing = 'border-box';
-    inner.style.padding = '4px';
-  }
 }
 
 function applyTransformation_Reproved(item) {
-  const { outer, inner } = item;
-  if (outer) {
-    outer.style.border = '1px solid red';
-    outer.style.boxSizing = 'border-box';
-    outer.style.padding = '4px';
+  const { outer } = item;
+  if (!outer) return;
+
+  outer.style.border = '1px solid red';
+  outer.style.boxSizing = 'border-box';
+  outer.style.padding = '4px';
+
+  if (outer.parentNode && outer.parentNode.classList.contains('classifier-accordion-wrapper')) {
+    return;
   }
-  if (inner) {
-    inner.style.border = '1px solid red';
-    inner.style.boxSizing = 'border-box';
-    inner.style.padding = '4px';
-  }
+
+  // wrapper element to occupy outer's slot in the DOM
+  const wrapper = document.createElement('div');
+  wrapper.className = 'classifier-accordion-wrapper';
+
+  outer.parentNode.insertBefore(wrapper, outer);
+  wrapper.appendChild(outer);
+  outer.style.display = 'none';
+
+  const banner = document.createElement('div');
+  banner.className = 'classifier-hidden-banner';
+  banner.style.cssText = `
+    padding: 10px 14px;
+    background-color: #f3f2ef;
+    border: 1px dashed #cccccc;
+    border-radius: 8px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  `;
+  banner.innerHTML = `
+    <span>🛡️ <strong>Post hidden by Feed Classifier</strong></span>
+    <span style="font-size: 11px; text-decoration: underline;">Click to reveal</span>
+  `;
+
+  // add 'toggle' click handler
+  banner.addEventListener('click', () => {
+    const isHidden = outer.style.display === 'none';
+    outer.style.display = isHidden ? '' : 'none';
+
+    banner.querySelector('span:last-child').textContent = isHidden
+      ? 'Click to hide'
+      : 'Click to reveal';
+  });
+
+  // insert banner above outer inside the wrapper
+  wrapper.insertBefore(banner, outer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
