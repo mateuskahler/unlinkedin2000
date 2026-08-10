@@ -1,7 +1,6 @@
-// 1. Import pipeline and env from local transformers file
+// Configure Offline Environment paths
 import * as transformers from './transformers.min.js';
 
-// 2. Configure Offline Environment paths
 transformers.env.allowRemoteModels = false;
 transformers.env.allowLocalModels = true;
 transformers.env.useBrowserCache = false;
@@ -12,7 +11,7 @@ transformers.env.localModelPath = chrome.runtime.getURL('web_classifier_amalgama
 console.log('[offscreen.js] ML Environment configured. Model path:', transformers.env.localModelPath);
 
 
-// 3. Singleton Promise Model Cache (aka: don't reload the model multiple times)
+// Singleton Promise Model Cache (aka: don't reload the model multiple times)
 let modelPromise = null;
 
 async function load_model() {
@@ -34,8 +33,7 @@ async function load_model() {
 }
 
 /**
- * 4. load_labels -> Object { candidateLabels, reproveLabelsIndexes }
- * Returns the classification labels structured for the model.
+ * load_labels -> Object { candidateLabels, reproveLabelsIndexes }
  */
 function load_labels() {
     return {
