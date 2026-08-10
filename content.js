@@ -58,12 +58,12 @@ function extractInnerContentText(elements) {
   return elements.map(({ outer, inner }) => {
     const rawText = inner.textContent || '';
     const cleanedText = rawText.replace(/\s+/g, ' ').trim();
-    
+
     let finalText = '';
     if (cleanedText) {
       finalText = cleanTextForTokenization(cleanedText);
     }
-    
+
     return { outer, inner, text: finalText };
   });
 }
@@ -71,16 +71,40 @@ function extractInnerContentText(elements) {
 ////////////////////////////////////////////////////////////////////////////////////
 // Visual feedback
 
-function applyTransformation(item) {
+function applyTransformation_Loading(item) {
   const { outer, inner } = item;
-  if (outer && inner) {
-    inner.style.border = '3px solid red';
-    inner.style.boxSizing = 'border-box';
-    inner.style.padding = '4px';
-
-    outer.style.border = '3px solid green';
+  if (outer) {
+    outer.style.border = '1px solid blue';
     outer.style.boxSizing = 'border-box';
     outer.style.padding = '4px';
+  }
+}
+
+function applyTransformation_Approved(item) {
+  const { outer, inner } = item;
+  if (outer) {
+    outer.style.border = '1px solid green';
+    outer.style.boxSizing = 'border-box';
+    outer.style.padding = '4px';
+  }
+  if (inner) {
+    inner.style.border = '1px solid green';
+    inner.style.boxSizing = 'border-box';
+    inner.style.padding = '4px';
+  }
+}
+
+function applyTransformation_Reproved(item) {
+  const { outer, inner } = item;
+  if (outer) {
+    outer.style.border = '1px solid red';
+    outer.style.boxSizing = 'border-box';
+    outer.style.padding = '4px';
+  }
+  if (inner) {
+    inner.style.border = '1px solid red';
+    inner.style.boxSizing = 'border-box';
+    inner.style.padding = '4px';
   }
 }
 
@@ -107,15 +131,18 @@ async function classifySinglePost(item) {
     throw error;
   }
 
-  if (!response || response.status === 'ERROR') {
+  if (!response || response.status !== 'SUCCESS') {
     console.warn('[content.js] Error from background service worker:', response ? response.error : 'No response');
     throw new Error(response ? response.error : 'No response from background worker');
   }
 
   console.log(`[content.js] received status: ${response.status}`);
 
-  if (response.status !== 'APPROVED') {
-    // TODO
+  if (response.decision === 'APPROVED') {
+    applyTransformation_Approved(item);
+  }
+  else {
+    applyTransformation_Reproved(item);
   }
 }
 
@@ -131,7 +158,7 @@ function runPipeline() {
   const contentDivsWithText = extractInnerContentText(contentDivs);
 
   for (const item of contentDivsWithText) {
-    applyTransformation(item);
+    applyTransformation_Loading(item);
     classification_queue.enqueue([item], classifySinglePost);
   }
 }
