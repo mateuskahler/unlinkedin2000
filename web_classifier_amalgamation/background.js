@@ -40,8 +40,7 @@ async function handleClassificationRequest(text) {
         status: 'SUCCESS' || 'ERROR',
         data: {
             decision: 'APPROVED' || 'REPROVED',
-            topLabel: topLabel,
-            topScore: topScore,
+            reason: 'MODEL_INFERENCE' || 'REGEX_MATCH',
             labels: output.labels,
             scores: output.scores,
             evaluatedText: text
@@ -49,9 +48,10 @@ async function handleClassificationRequest(text) {
         */
 
         console.log('[background.js] Received evaluated text:', response.data.evaluatedText);
+        console.log('[background.js] Classification Decision:', response.data.decision);
+        console.log('[background.js] Classification Reason:', response.data.reason);
         console.log('[background.js] Received Labels:', response.data.labels);
         console.log('[background.js] Received Scores:', response.data.scores);
-        console.log('[background.js] Classification Decision:', response.data.decision);
 
         resolve({
           status: 'SUCCESS',
