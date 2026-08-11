@@ -1,16 +1,25 @@
 function cleanTextForTokenization(text) {
   if (!text) return '';
 
-  return text
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\p{Extended_Pictographic}/gu, '')
+  // UTF-16 surrogates
+  let adjustedText = typeof text.toWellFormed === 'function' 
+    ? text.toWellFormed() 
+    : text.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '');
+
+  // remove trailing indicator (handles '… more', '... more', '…more', etc.)
+  adjustedText = adjustedText.replace(/(?:…|\.\.\.)\s*more$/i, '').trim();
+
+  // normalize spaces, quotes, and unseen DOM artifacts
+  adjustedText = adjustedText
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
+  
+  return adjustedText;
 }
-
 
 function sendMessageWithTimeout(message, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
